@@ -1,43 +1,15 @@
-//3456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_
-// (JT: why the numbers? counts columns, helps me keep 80-char-wide listings)
-//
-// TABS set to 2.
-//
 // ORIGINAL SOURCES:
 // Chap 5: TexturedQuad.js (c) 2012 matsuda and kanda
 //					"WebGL Programming Guide" pg. 163
 // RotatingTranslatedTriangle.js (c) 2012 matsuda
-// JT_MultiShader.js  for EECS 351-1, 
+// JT_MultiShader.js  for EECS 351-1,
 //									Northwestern Univ. Jack Tumblin
+//	LineGrid.js 		Northwestern Univ. Jack Tumblin
 //----------------------------------------------------------------------
-//	traceWeek01_LineGrid.js 		Northwestern Univ. Jack Tumblin
+//	LineGrid.js 		Northwestern Univ. Nathaniel Wong, EECS 351-2
 //----------------------------------------------------------------------
-//	--add comments
-//	--add mouse & keyboard functions + on-screen display & console reporting
-//	--two side-by-side viewports: 
-//			LEFT:	--3D line-drawing preview
-//			RIGHT:--texture-map from a Uint8Array object.  
-//						(NOTE: Not all versions of WebGL offer floating-point textures: 
-//							instead our ray-tracer will fill a Float32Array array in a 
-//               CImgBuf object. To display that image, our CImgBuf object 
-//	             converts RGB 32-bit floats to 8 bit RGB integers for  
-//               the Uint8Array texture map we show on-screen.
-//               (convert by rounding: intRGB = floatRGB*255.5)
-//	--include re-sizing so that HTML-5 canvas always fits browser-window width
-//							(see 351-1 starter code: 7.11.JT_HelloCube_Resize.js, .html)
-//	--revise to use VBObox0,VBObox1 objects; each holds one VBO & 1 shader pgm,
-//			so that changes to code for WebGL preview in the left viewport won't 
-//			affect code for the right viewport that displays ray-traced result by 
-//			texture-mapping.
-//	--Update VBObox code: drop old VBOboxes.js, add JT_VBObox-Lib.js (vers. 18)
-//    with 'switchToMe()' and improved animation timing
-// --Unify our user-interface's global variables into one 'GUIbox' object.
-//==============================================================================
 
-// Global Variables  
-//   (These are almost always a BAD IDEA, but here they eliminate lots of
-//    tedious function arguments. 
-//    Later, collect them into just a few global, well-organized objects!)
+// Global Variables
 // ============================================================================
 //-----For WebGL usage:-------------------------
 var gl;													// WebGL rendering context -- the 'webGL' object
@@ -47,61 +19,45 @@ var g_canvasID;									// HTML-5 'canvas' element ID#
 //-----Mouse,keyboard, GUI variables-----------
 var gui = new GUIbox(); // Holds all (Graphical) User Interface fcns & vars, for
                         // keyboard, mouse, HTML buttons, window re-sizing, etc.
-                        
+
 //-----For the VBOs & Shaders:-----------------
 preView = new VBObox0();		// For WebGLpreview: holds one VBO and its shaders
 rayView = new VBObox1();		// for displaying the ray-tracing results.
 
 //-----------Ray Tracer Objects:---------------
-var g_myPic = new CImgBuf(256,256); // Create a floating-point image-buffer 
+var g_myPic = new CImgBuf(256,256); // Create a floating-point image-buffer
                         // object to hold the image created by 'g_myScene' object.
 
-var g_myScene = new CScene(g_myPic); // Create our ray-tracing object; 
-                        // this contains our complete 3D scene & its camera 
+var g_myScene = new CScene(g_myPic); // Create our ray-tracing object;
+                        // this contains our complete 3D scene & its camera
                         // used to write a complete ray-traced image to the
                         // CImgBuf object 'g_myPic' given as argument.
 
 var g_SceneNum = 0;			// scene-selector number; 0,1,2,... G_SCENE_MAX-1
 var G_SCENE_MAX = 3;		// Number of scenes defined.
 
-var g_AAcode = 1;			// Antialiasing setting: 1 == NO antialiasing at all. 
+var g_AAcode = 1;			// Antialiasing setting: 1 == NO antialiasing at all.
                         // 2,3,4... == supersamples: 2x2, 3x3, 4x4, ...
-var G_AA_MAX = 4;				// highest super-sampling number allowed. 
+var G_AA_MAX = 4;				// highest super-sampling number allowed.
 var g_isJitter = 0;     // ==1 for jitter, ==0 for no jitter.
 
 //-----For animation & timing:---------------------
-var g_lastMS = Date.now();			// Timestamp (in milliseconds) for our 
-                                // most-recently-drawn WebGL screen contents.  
-                                // Set & used by moveAll() fcn to update all
-                                // time-varying params for our webGL drawings.
-  // All time-dependent params (you can add more!)
+var g_lastMS = Date.now();			// Timestamp (in milliseconds)
+
+// All time-dependent params (you can add more!)
 /*
 var g_angleNow0  =  0.0; 			  // Current rotation angle, in degrees.
 var g_angleRate0 = 45.0;				// Rotation angle rate, in degrees/second.
 */
-//--END---GLOBAL VARIABLES------------------------------------------------------
 
 function main() {
-//=============================================================================
-// Function that begins our Javascript program (because our HTML file specifies 
-// its 'body' tag to define the 'onload' parameter as main() )
-
-//  test_glMatrix();		// make sure that the fast vector/matrix library we use
-  										// is available and working properly.
 
   // Retrieve the HTML-5 <canvas> element where webGL will draw our pictures:
-  g_canvasID = document.getElementById('webgl');	
+  g_canvasID = document.getElementById('webgl');
 
-  // Create the the WebGL rendering context: one giant JavaScript object that
-  // contains the WebGL state machine, adjusted by big sets of WebGL functions,
-  // built-in variables & parameters, and member data. Every WebGL func. call
-  // will follow this format:  gl.WebGLfunctionName(args);
-  //gl = getWebGLContext(g_canvasID); // SIMPLE version.
-  // Here's a BETTER version:
+  // Create the the WebGL rendering context: one giant JavaScript object
+  // This fancier-looking version disables HTML-5's default screen-clearing
   gl = g_canvasID.getContext("webgl", { preserveDrawingBuffer: true});
-	// This fancier-looking version disables HTML-5's default screen-clearing, 
-	// so that our drawAll() function will over-write previous on-screen results 
-	// until we call the gl.clear(COLOR_BUFFER_BIT); function. )
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return;
@@ -112,17 +68,17 @@ function main() {
   gui.init();                   // Register all Mouse & Keyboard Event-handlers
                                 // (see JT_GUIbox-Lib.js )
 
-test_glMatrix();	// Make sure you understand how glMatrix.js library works.
-					// (open console to see what's printed there)
+  //test_glMatrix();	// Make sure you understand how glMatrix.js library works.
+					            // (open console to see what's printed there)
 
-  // Initialize each of our 'vboBox' objects: 
+  // Initialize each of our 'vboBox' objects:
   preView.init(gl);		// VBO + shaders + uniforms + attribs for WebGL preview
   rayView.init(gl);		//  "		"		" to display ray-traced on-screen result.
 
-  onBrowserResize();			// Re-size this canvas before we use it. (ignore the 
-  // size settings from our HTML file; fill browser window with canvas whose 
+  onBrowserResize();			// Re-size this canvas before we use it. (ignore the
+  // size settings from our HTML file; fill browser window with canvas whose
   // width is twice its height.)
-  
+
   drawAll();
 //----------------------------------------------------------------------------
 // NOTE! Our ray-tracer ISN'T 'animated' in the usual sense!
@@ -176,22 +132,22 @@ function print_mat4(a, nameStr) {
 
 function test_glMatrix() {
 //=============================================================================
-// Make sure that the fast vector/matrix library we use is available and works 
-// properly. My search for 'webGL vector matrix library' found the GitHub 
-// project glMatrix is intended for WebGL use, and is very fast, open source 
+// Make sure that the fast vector/matrix library we use is available and works
+// properly. My search for 'webGL vector matrix library' found the GitHub
+// project glMatrix is intended for WebGL use, and is very fast, open source
 // and well respected.		 	SEE:       http://glmatrix.net/
-// 			NOTE: cuon-matrix.js library (supplied with our textbook: "WebGL 
-// Programming Guide") duplicates some of the glMatrix.js functions. For 
-// example, the glMatrix.js function 		mat4.lookAt() 		is a work-alike 
+// 			NOTE: cuon-matrix.js library (supplied with our textbook: "WebGL
+// Programming Guide") duplicates some of the glMatrix.js functions. For
+// example, the glMatrix.js function 		mat4.lookAt() 		is a work-alike
 //	 for the cuon-matrix.js function 		Matrix4.setLookAt().
 // Try some vector vec4 operations:
-	var myV4 = vec4.fromValues(1,8,4,7);				// create a 4-vector 
+	var myV4 = vec4.fromValues(1,8,4,7);				// create a 4-vector
 																							// (without 'var'? global scope!)
   console.log('-----TEST------\n-----glMatrix.js library------------');
   var outV4 = vec4.create();
   console.log('0):\n var outV4 = vec4.create();\n result:');
   console.log('outV4 object:\n ', outV4);
-  console.log('\n outV4[0]: ', outV4[0], 
+  console.log('\n outV4[0]: ', outV4[0],
               '\n outV4[1]: ', outV4[1],
               '\n outV4[2]: ', outV4[2],
               '\n outV4[3]: ', outV4[3] );
@@ -203,10 +159,10 @@ function test_glMatrix() {
 	console.log("  **OR** use the vec4.str() member function that returns the",
 	            " vector as a string, so that: console.log(vec4.str(myV4));");
 	console.log("will print: \n ", vec4.str(myV4));
-			
+
 	console.log('2):\n var yerV4 = vec4.fromValues(1,1,1,1); result:');
 	var yerV4 = vec4.fromValues(1,1,1,1);
-	console.log('\n yerV4[] object:\n ', yerV4); 
+	console.log('\n yerV4[] object:\n ', yerV4);
 	console.log('or if we print the vec4.str(yerV4) string:', vec4.str(yerV4));
 	console.log('3):\n vec4.subtract(outV4, yerV4, myV4);\n');
 	vec4.subtract(outV4, yerV4, myV4);
@@ -215,20 +171,20 @@ function test_glMatrix() {
 
 	console.log('4):=================\n  4x4 Matrix tests:\n4):=================\n',
 	            '  var myM4 = mat4.create();\n   ',
-	            '("creates" a 4x4 identity matrix)'); 
+	            '("creates" a 4x4 identity matrix)');
 	            // Try some matrix mat4 operations:
 	var myM4 = mat4.create();							// create a 4x4 matrix
 	console.log('\n print myM4 object:\n ', myM4);
 	console.log('\nHmmm. Is this "row-major" order? \n',
-	            ' (Starts at upper left,\n',   
+	            ' (Starts at upper left,\n',
 	            '  right-to-left on top row,\n',
 	            '  repeat on next-lower row, etc)?');
 	console.log('\nOr is it "column-major" order?\n',
 	            ' (Starts at upper left,\n',
 	            '  top-to-bottom on left column,\n',
 	            '  repeat on next-rightwards column, etc)?');
-	// Nice illustration: https://en.wikipedia.org/wiki/Row-_and_column-major_order 
-	
+	// Nice illustration: https://en.wikipedia.org/wiki/Row-_and_column-major_order
+
 	console.log('\nMake a translate matrix from a vec3 or vec4 displacement to find out:\n',
 	            'var transV3 = vec3.fromValues(0.6,0.7,0.8);\n',
 				'var transV4 = vec4.fromValues( 6, 7, 8, 9):\n');
@@ -243,7 +199,7 @@ function test_glMatrix() {
   console.log('\n print myM4 object made from transV4:', myM4);
   console.log("AHA!! As you can see, mat4.translate() IGNORES the vec4 'w' value. Good!")
 	//---------------------------------------------------------------------------
-	// As you can see, the 'mat4' object stores matrix contents in COLUMN-first 
+	// As you can see, the 'mat4' object stores matrix contents in COLUMN-first
 	// order; to display this translation matrix correctly, do this
 	console.log('\n !AHA! COLUMN-MAJOR order:\n',
 	 'top-to-bottom starting at leftmost column.\n',
@@ -252,7 +208,7 @@ function test_glMatrix() {
 	 print_mat4(myM4, "Translation matrix myM4");
  // re-sizing text for print_mat4() function
   console.log("check print_mat4() resizing by setting myMat elements to varied digits:");
-  var myMat = mat4.create();  
+  var myMat = mat4.create();
   myMat[ 0] = 0.9876543;
   myMat[ 1] = -0.9876543;
   myMat[ 2] = 1.9876543;
@@ -267,7 +223,7 @@ function test_glMatrix() {
   myMat[11] = -12345.9876543;
   myMat[12] = 123456.9876543;
   myMat[13] = -123456.9876543;
-  print_mat4(myMat, "myMat"); 
+  print_mat4(myMat, "myMat");
 
 	console.log('SUGGESTION:\n write similar fcns for mat2,mat3, vec2,vec3,vec4,',
 				' OR look into later versions of the glMatrix library...');
@@ -307,7 +263,7 @@ function test_glMatrix() {
   var trnM4 = mat4.create();
   mat4.translate(trnM4, trnM4, [5,0,0]);
   print_mat4(trnM4,"trnM4==translate(5,0,0)");
-  print_mat4(rotM4,"rotM4==rotateZ(+30deg)");  
+  print_mat4(rotM4,"rotM4==rotateZ(+30deg)");
   mat4.multiply(outM4,rotM4,trnM4); //  multiply(out,a,b) finds [out] = [a][b];
   print_mat4(outM4,"outM4==[rotM4][trnM4]");
   console.log(" --------YES! [rotM4][trnM4] is what we want.");
@@ -323,7 +279,7 @@ function drawAll() {
 //
 // NOTE: this program doesn't have an animation loop!
 //  We only re-draw the screen when the user needs it redrawn:
-//  we call this function just once by main() at program start; or 
+//  we call this function just once by main() at program start; or
 //  by onBrowserResize() whenever our browser window size changes; or
 //  by the GUIbox object 'gui' methods for user input from mouse, keyboard, or
 //  on-screen buttons and controls (e.g. 't' or 'T' keys; mouse-drag;...)
@@ -369,24 +325,24 @@ function onSuperSampleButton() {
   // report it:
   if(g_AAcode==1) {
     if(g_isJitter==0) {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		"1 sample/pixel. No jitter.";
       console.log("1 sample/pixel. No Jitter.");
-    } 
+    }
     else {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		"1 sample/pixel, but jittered.";
       console.log("1 sample/pixel, but jittered.")
-    } 
+    }
   }
   else { // g_AAcode !=1
     if(g_isJitter==0) {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		g_AAcode+"x"+g_AAcode+" Supersampling. No jitter.";
       console.log(g_AAcode,"x",g_AAcode,"Supersampling. No Jitter.");
-    } 
+    }
     else {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		g_AAcode+"x"+g_AAcode+" JITTERED Supersampling";
       console.log(g_AAcode,"x",g_AAcode," JITTERED Supersampling.");
     }
@@ -402,30 +358,30 @@ function onJitterButton() {
   // report it:
   if(g_AAcode==1) {
     if(g_isJitter==0) {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		"1 sample/pixel. No jitter.";
       console.log("1 sample/pixel. No Jitter.");
-    } 
+    }
     else {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		"1 sample/pixel, but jittered.";
       console.log("1 sample/pixel, but jittered.")
-    } 
+    }
   }
   else { // g_AAcode !=0
     if(g_isJitter==0) {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		g_AAcode+"x"+g_AAcode+" Supersampling. No jitter.";
       console.log(g_AAcode,"x",g_AAcode,"Supersampling. No Jitter.");
-    } 
+    }
     else {
-  		document.getElementById('AAreport').innerHTML = 
+  		document.getElementById('AAreport').innerHTML =
   		g_AAcode+"x"+g_AAcode+" JITTERED Supersampling";
       console.log(g_AAcode,"x",g_AAcode," JITTERED Supersampling.");
     }
   }
 }
-			
+
 function onSceneButton() {
 //=============================================================================
 	//console.log('ON-SCENE BUTTON!');
@@ -456,8 +412,8 @@ function onBrowserResize() {
 	else {	// fit canvas to browser-window width
 		g_canvasID.width = innerWidth - 20;       // (with 20-pixel margin)
 		g_canvasID.height = 0.5*innerWidth - 20;  // (with 20-pixel margin)
-	  }	 
-// console.log('NEW g_canvas width,height=' +  
-//  						g_canvasID.width + ', ' + g_canvasID .height);		
+	  }
+// console.log('NEW g_canvas width,height=' +
+//  						g_canvasID.width + ', ' + g_canvasID .height);
  drawAll();     // re-draw browser contents using the new size.
 }
