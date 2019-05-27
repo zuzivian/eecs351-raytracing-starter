@@ -2,16 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>01_LineGrid RESCUE</title>  <!-- Keep it short: title appears on browser tab-->
-		<!-- OPTIONAL: let's surround canvas with a thin blue outline -->
-		<style type =" text/ css"> canvas {border: 2px dotted blue;} </style>
+    <title>Ray Tracing</title>  <!-- Keep it short: title appears on browser tab-->
   </head>
 
-	<!--	Create the HTML5 'canvas' element in which we will run WebGL
-	-->
   <body onload="main()" onresize="onBrowserResize()">
     <canvas id="webgl" width="800" height="500">
-    Please use a browser that supports "canvas"
+    Please use a browser that supports HTML5
     </canvas>
 	<br>
 	    <b>Ray Tracer: Press 't' to Trace!</b>
@@ -44,10 +40,8 @@
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
-    <!-- SEE: http://glmatrix.net/ fast vector/matrix lib for webGL  -->
     <script src="lib/glMatrix.js"></script>
 
-		<!-- finally, our own code: -->
 		<script src="GUIbox-Lib.js"></script>
 		<script src="VBObox-Lib.js"></script>
 		<script src="TraceSupplement.js"></script>
