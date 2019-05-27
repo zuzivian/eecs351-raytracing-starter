@@ -1,39 +1,4 @@
 //===  TraceSupplement.js  ===================================================
-// The object prototypes below (and their comments) are suitable for any and
-// all features described in the Ray-Tracing Project Assignment Sheet.
-//
-// HOWEVER, they're not required, nor even particularly good:
-//				(notably awkward style from their obvious C/C++ origins)
-// They're here to help you get 'started' on better code of your own,
-// and to help you avoid common structural 'traps' in writing ray-tracers
-//		that might otherwise force ugly/messy refactoring later, such as:
-//  --lack of a well-polished vector/matrix library; e.g. open-src glmatrix.js
-//  --lack of floating-point RGB values to compute light transport accurately,
-//	--no distinct 'camera' and 'image' objects or 'trace' and 'display' funcs
-// 		separate slow ray-tracing steps from fast screen display and refresh.
-//	--lack of ray-trace image-buffer (window re-sizing discards your work!)
-//  --lack of texture-mapped image display; permit ray-traced image of any
-//		resolution to display on any screen at any desired image size
-//  --the need to describe geometry/shape independently from surface materials,
-//		and to select material(s) for each shape from a list of materials;
-//  --materials that permit procedural 3D textures, turbulence & Perlin Noise,
-//	--objects for independent light sources, ones that can inherit their
-//    location(s) from a geometric shape (e.g. a light-bulb shape).
-//  --need to create a sortable LIST of ray/object hit-points, and not just
-//		the intersection nearest to the eyepoint, to enable shape-creation by
-//		Constructive Solid Geometry (CSG), and to streamline transparency effects
-//  --functions organized well to permit easy recursive ray-tracing:  don't
-//		tangle together ray/object intersection-finding tasks with shading,
-//		lighting, and materials-describing tasks.(e.g. traceRay(), findShade() )
-//	--ability to easily match openGL/WebGL functions with ray-tracing results,
-//		using identically-matching ray-tracing functions for cameras, views,
-//		transformations, lighting, and materials (e.g. rayFrustum(), rayLookAt();
-//		rayTranlate(), rayRotate(), rayScale()...)
-//  --a straightforward method to implement scene graphs & jointed objects.
-//		Do it by transforming world-space rays to model coordinates, rather than
-//		models to world coords, using a 4x4 world2model matrix stored in each
-//		model (each CGeom primitive).  Set it by OpenGL-like functions
-//		rayTranslate(), rayRotate(), rayScale(), etc.
 
 /*
 -----------ORGANIZATION:-----------
@@ -62,13 +27,6 @@ The 'makeRayRacedImage() function orchestrates creation and recursive tracing
 		--CHit == an object that describes how 1 ray pierced the surface of 1 shape;
 		--CHitList == Array of all CHit objects for 1 ray traced thru entire CScene.
 */
-
-//----------------------------------------------------------------------------
-// NOTE: JavaScript has no 'class-defining' statements or declarations: instead
-// we simply create a new object type by defining its constructor function, and
-// add member methods/functions using JavaScript's 'prototype' feature.
-// SEE: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/prototype
-//----------------------------------------------------------------------------
 
 function CRay() {
 //=============================================================================
@@ -618,11 +576,9 @@ CImgBuf.prototype.printPixAt = function(xpix,ypix) {
 //=============================================================================
 // Use console.log() to print the integer and floating-point values (R,B,B,...)
 // stored in our CImgBuf object for the pixel at (xpix,ypix)
-		//
-		//
-		//		YOU WRITE THIS
-		//
-		//
+
+	//  TODO:	YOU WRITE THIS!
+
 }
 
 CImgBuf.prototype.makeRayTracedImage = function() {
@@ -632,8 +588,6 @@ CImgBuf.prototype.makeRayTracedImage = function() {
 // and NOT a member of CImgBuf OBJECTS!
 //
 // Create an image by Ray-tracing.   (called when you press 'T' or 't')
-
-//	console.log("You called CImgBuf.makeRayTracedImage!")
 
   var eyeRay = new CRay();	// the ray we trace from our camera for each pixel
   var myCam = new CCamera();	// the 3D camera that sets eyeRay values
@@ -727,17 +681,9 @@ function CScene() {
                                     // (why?  JS uses 52-bit mantissa;
                                     // 2^-52 = 2.22E-16, so 10^-15 gives a
                                     // safety margin of 20:1 for small # calcs)
-	//
-	//
-	//
-	//
-	//
-	//  	YOU WRITE THIS!
-	//
-	//
-	//
-	//
-	//
+
+	//  TODO:	YOU WRITE THIS!
+
 }
 
 function CHit() {
@@ -750,16 +696,8 @@ function CHit() {
 // (CHit, CHitList classes are consistent with the 'HitInfo' and 'Intersection'
 // classes described in FS Hill, pg 746).
 
-	//
-	//
-	//
-	//
-	//  	YOU WRITE THIS!
-	//
-	//
-	//
-	//
-	//
+	//  TODO:	YOU WRITE THIS!
+
 }
 
 function CHitList() {
@@ -775,14 +713,7 @@ function CHitList() {
 //      our current list in the pierce[] array. if iEnd=0, the list is empty.
 //     CAREFUL! *YOU* must prevent buffer overflow! Keep iEnd<= JT_HITLIST_MAX!
 //  -- 'iNearest' index selects the CHit object nearest the ray's origin point.
-	//
-	//
-	//
-	//
-	//  	YOU WRITE THIS!
-	//
-	//
-	//
-	//
-	//
+
+	//  TODO:	YOU WRITE THIS!
+
 }
