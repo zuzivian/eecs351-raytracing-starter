@@ -48,23 +48,23 @@ I recommend that you use just two global top-level objects (put above main() )
 	  your ray-tracer that computes an image that fills the g_myPic CImgBuf object.
 
 One CScene object contains all parts of our ray-tracer:
-  - its camera (CCamera) object,
-  - its collection of 3D shapes (CGeom in geomList array)
-  - its collection of light sources (CLight objects in lightList array),
-  - its collection of materials (CMatl objects in  matlList array), and more.
+- its camera (CCamera) object,
+- its collection of 3D shapes (CGeom in geomList array)
+- its collection of light sources (CLight objects in lightList array),
+- its collection of materials (CMatl objects in  matlList array), and more.
 
 When users press the 'T' or 't' key (see GUIbox method gui.keyDown() ),
-  - the program starts ray-tracing:
-  - it calls the CScene method 'MakeRayTracedImage()'. This top-level function
-  - fills each pixel of a CImgBuf object (e.g g_myPic) given as its fcn argument.
+- the program starts ray-tracing:
+- it calls the CScene method 'MakeRayTracedImage()'. This top-level function
+- fills each pixel of a CImgBuf object (e.g g_myPic) given as its fcn argument.
 
 The 'makeRayRacedImage() function orchestrates creation and recursive tracing
 of millions of rays to find the on-screen color of each pixel in the given
 CImgBuf object (g_myPic).
 
 The CScene object also contains & uses:
-	- CRay	== a 3D ray object in an unspecified coord. system (usually 'world').
-	- CCamera == ray-tracing camera object defined the 'world' coordinate system.
-	- CGeom	== a 3D geometric shape object for ray-tracing (implicit function).
-	- CHit == an object that describes how 1 ray pierced the surface of 1 shape;
-	- CHitList == Array of all CHit objects for 1 ray traced thru entire CScene.
+- CRay	== a 3D ray object in an unspecified coord. system (usually 'world').
+- CCamera == ray-tracing camera object defined the 'world' coordinate system.
+- CGeom	== a 3D geometric shape object for ray-tracing (implicit function).
+- CHit == an object that describes how 1 ray pierced the surface of 1 shape;
+- CHitList == Array of all CHit objects for 1 ray traced thru entire CScene.
