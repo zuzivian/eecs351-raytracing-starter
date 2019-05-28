@@ -28,132 +28,133 @@ Call it when users press the 'c' (clear) key.
 
 
 - Second, note that the 'cuon-matrix' library supplied with our WebGL book is a bit too cursory for writing a good ray-tracer: we will need objects for vectors, matrices, and functions to manipulate them in 2D, 3D, and 4D.  In the starter code you will find the 'glMatrix.js' library by Brandon Jones and Colin Mackenzie that's notable for its speed and simplicity (e.g. https://github.com/toji/gl-matrix ), and very well-suited for ray-tracing.
-It offers:
-   ..- vector classes vec2,vec3,vec4 (for 2,3, and 4-element vectors), and
-   ..- matrix classes mat2,mat3,mat4 (for 2x2, 3x3, 4x4 matrices).
-   ..- functions to create, clone, change, multiply, invert, normalize and more.
-Use it to write a very basic object to describe a ray (CRay) that contains just these members:
 
+	It offers:
+
+	   - vector classes vec2,vec3,vec4 (for 2,3, and 4-element vectors), and
+	   - matrix classes mat2,mat3,mat4 (for 2x2, 3x3, 4x4 matrices).
+	   - functions to create, clone, change, multiply, invert, normalize and more.
+
+	Use it to write a very basic object to describe a ray (CRay) that contains just these members:
+
+	```
 	// ray origin or position:
 	vec4 orig;	// why 4 instead of 3? Homogeneous coordinates!
 							// use this for (x,y,z,w); set w=1.0;
 	// ray direction:	 
 	vec4 dir;	// here, set w=0 (its a vector, not a point)
 
-  // The 'w' values enable you to construct any transformations you wish with a
-  // simple 4x4 matrix, including any desired combination of translate, rotate,
-  // scale, skew etc.
+	// The 'w' values enable you to construct any transformations you wish with a
+	// simple 4x4 matrix, including any desired combination of translate, rotate,
+	// scale, skew etc.
+	```
 
 - Third, write a very basic ray-tracing camera object type (CCamera) that creates a CRay object each time we want to compute a pixel value in our output image. As with our cuon-matrix library's'gl.setFrustum()' camera, our first, simplest ray-tracing camera creates an rectangular image plane perpendicular to the -Z axis,
-spanning 'left' <= x <= 'right' in x,
-spanning 'bot'  <= y <= 'top'   in y.  
+  - spanning 'left' <= x <= 'right' in x,
+  - spanning 'bot'  <= y <= 'top'   in y.  
 
-Imagine that the camera divides this image rectangle into xmax by ymax 'little squares' (one for each pixel), and shoots rays from the origin (0,0,0) through those squares to find the corresponding pixel values.  Remember, a pixel is NOT a little square, but instead is the infinitesimal spot at the center of that square (and a pixel value is an estimate of the image color at the pixel the image neighborhood around it (maybe a square neighborhood, but maybe not).  
+	Imagine that the camera divides this image rectangle into xmax by ymax 'little squares' (one for each pixel), and shoots rays from the origin (0,0,0) through those squares to find the corresponding pixel values.  Remember, a pixel is NOT a little square, but instead is the infinitesimal spot at the center of that square (and a pixel value is an estimate of the image color at the pixel the image neighborhood around it (maybe a square neighborhood, but maybe not).  
 
-For the simplest image making (without any antialiasing) just shoot ONE ray through the CENTER of each of the little squares; the color found at the end of that ray becomes the color for that pixel in our output image (CImgBuf).
+	For the simplest image making (without any antialiasing) just shoot ONE ray through the CENTER of each of the little squares; the color found at the end of that ray becomes the color for that pixel in our output image (CImgBuf).
 
-Start with these CCamera data members:
+	Start with these CCamera data members:
+
 		integer xmax,ymax;	// ray-camera image resolution, measured in pixels.
-	  // frustum parameters (just like the ones used by setFrustum() function;)
+		// frustum parameters (just like the ones used by setFrustum() function;)
 		float iLeft,iRight;  // image-plane limits in x direction,
 		float iBot, iTop;	 // image-plane limits in y direction,
 		float iNear;		 // image-plane location on z axis.
-    // (no iFar required, because we choose to ignore zfar and allow our ray-tracer's viewing frustum to extend without limit outwards from the camera into the scene.)  
+		// (no iFar required, because we choose to ignore zfar and allow our ray-tracer's viewing frustum to extend without limit outwards from the camera into the scene.)  
 
-and make these CCcamera function members:
-	void makeSimpleCam();  (no arguments)
-	//makes a very simple square camera with a +/-45 degree field of view:
-	//sets left= -1.0; right= 1.0; bot = -1.0;  top = 1.0; znear= -1.0;
+	and make these CCcamera function members:
 
-	void makeEyeRay() // that accepts these arguments:
-	// CRay eye, float xpos, float ypos;
-	// create a ray from eyepoint through the image plane at
-	//	(xpos,ypos,znear).
-	// Note xpos and ypos are between the left,right,top,bot limits)
+		void makeSimpleCam();  (no arguments)
+		//makes a very simple square camera with a +/-45 degree field of view:
+		//sets left= -1.0; right= 1.0; bot = -1.0;  top = 1.0; znear= -1.0;
 
-BUT: Don't call these functions yet; we'll do it in Step 5 below.
+		void makeEyeRay() // that accepts these arguments:
+		// CRay eye, float xpos, float ypos;
+		// create a ray from eyepoint through the image plane at
+		//	(xpos,ypos,znear).
+		// Note xpos and ypos are between the left,right,top,bot limits)
+
+	BUT: Don't call these functions yet; we'll do it in Step 5 below.
 
 - Fourth, write a very basic shape-describing object type (CGeom).  For now, we'll use it to describe only one kind of shape, a 'grid-plane' like the one in the picture shown in the lecture notes.  This solid, unbounded plane is perpendicular to the Z axis at location z=zVal; it stretches to infinity, and we cover the plane with grid of lines parallel to the x and y axes. The lineColr[] array sets the color of these lines, and the bkgndColor set the color on the plane in the gaps between the lines.
 
-I suggest these data members:
+	I suggest these data members:
 
-	vec3 bkgndColr;	// r,g,b background color, line color
-	vec3 lineColr;		// (Make sure they're different!)
-	float xgap,ygap;	// grid-line spacing along x,y directions
-						// Start with xgap=ygap=1.0;
-	float linewidth;	// line width, as a fraction of xgap or ygap;
-						// (I think linewidth=0.1 looks good)
-	float zVal;		// TEMPORARY! the z value where the grid-plane
-						// meets the perpendicular z axis.
-HINTS: use keyboard's 1,2 keys to adjust zval up and down...
-start with an initial zVal value of -5.0
-(Why? CCamera object, at origin, looks down the -z axis!)
+		vec3 bkgndColr;	// r,g,b background color, line color
+		vec3 lineColr;		// (Make sure they're different!)
+		float xgap,ygap;	// grid-line spacing along x,y directions
+							// Start with xgap=ygap=1.0;
+		float linewidth;	// line width, as a fraction of xgap or ygap;
+							// (I think linewidth=0.1 looks good)
+		float zVal;		// TEMPORARY! the z value where the grid-plane
+							// meets the perpendicular z axis.
+	HINTS: use keyboard's 1,2 keys to adjust zval up and down...
+	start with an initial zVal value of -5.0
+	(Why? CCamera object, at origin, looks down the -z axis!)
 
-Start with just these two member functions:
+	Start with just these two member functions:
 
-	drawWebGL();		(no arguments)
-	// Draws the grid-lines using webGL primitives.  Just make
-	// a simple grid of lines parallel to the x and y axes at z=zval;
-	// ignore background color between lines.
-	// Use this call to replace the wireframe teapot drawing already
-	// supplied.  Note that the mouse and arrow keys move this plane in
-	// the webGL display; it draws the plane in a 'model' coordinate
-	// system, applying a matrix we constructed for ray-tracing.
+		drawWebGL();		(no arguments)
+		// Draws the grid-lines using webGL primitives.  Just make
+		// a simple grid of lines parallel to the x and y axes at z=zval;
+		// ignore background color between lines.
+		// Use this call to replace the wireframe teapot drawing already
+		// supplied.  Note that the mouse and arrow keys move this plane in
+		// the webGL display; it draws the plane in a 'model' coordinate
+		// system, applying a matrix we constructed for ray-tracing.
 
-	traceGrid() accepts CRay argument 'inRay';
-	// Your first ray-intersection function:  
-	// Ray(t) = RayOrigin + t*RayDir
-	// Find the 't0' value where Ray(t) hits the grid-plane object:
-	//		Ray(t0).z = RayOrigin.z + t0*RayDir.z = zVal
-	//	thus	t0 = (zVal - RayOrigin.z)/RayDir.z
-	// - use that 't0' to find where the ray hits the grid-plane object:
-	//		hit point (x,y,z) = Ray(t0).x, Ray(t0).y, Ray(t0).z
-	// - returns 0.0 if ray hits our grid-plane surface at an x,y location
-	// 	BETWEEN the grid-lines,
-	// - return 1.0 if ray hits our grid-plane surface at an x,y location
-	// 	ON one of the grid-lines,
-	// - returns -1.0 if ray misses the plane entirely- no intersection.
+		traceGrid() accepts CRay argument 'inRay';
+		// Your first ray-intersection function:  
+		// Ray(t) = RayOrigin + t*RayDir
+		// Find the 't0' value where Ray(t) hits the grid-plane object:
+		//		Ray(t0).z = RayOrigin.z + t0*RayDir.z = zVal
+		//	thus	t0 = (zVal - RayOrigin.z)/RayDir.z
+		// - use that 't0' to find where the ray hits the grid-plane object:
+		//		hit point (x,y,z) = Ray(t0).x, Ray(t0).y, Ray(t0).z
+		// - returns 0.0 if ray hits our grid-plane surface at an x,y location
+		// 	BETWEEN the grid-lines,
+		// - return 1.0 if ray hits our grid-plane surface at an x,y location
+		// 	ON one of the grid-lines,
+		// - returns -1.0 if ray misses the plane entirely- no intersection.
 
-(see footnote 2 below)
+	(see footnote 2 below)
 
 - Fifth, write a very basic object type (CScene) that contains our entire ray tracer. Start very, very simply: at first, you'll have just one CScene object, and the object contains only:
-	..- one camera object to describe the camera,
+
+	- one camera object to describe the camera,
 		(CCamera object 'rayCam')
-	..- one ray object that holds the ray we're currently tracing to find a pixel's color,
+	- one ray object that holds the ray we're currently tracing to find a pixel's color,
 		 (CRay object 'rayNow')
-	..- one shape object that hold our grid-plane object we're going to draw on-screen,
+	- one shape object that hold our grid-plane object we're going to draw on-screen,
 		(CShape item[0])
-	..- one 'makeRayTracedImage() member fcn whose argument is:
-		....- the CImgBuf object where you want to draw the image.
-Initialize:
-	..- Declare a single global variable of type CScene,
+	- one 'makeRayTracedImage() member fcn whose argument is: the CImgBuf object where you want to draw the image.
+	Initialize:
+	- Declare a single global variable of type CScene,
 		(such as the commented-out 'myScene')
-	..- in the init_raytrace()  function,
-		....- set up your camera: call myScene.makeSimpleCam();
-		....- set up your grid-plane object:
+	- in the init_raytrace()  function,
+		- set up your camera: call myScene.makeSimpleCam();
+		- set up your grid-plane object:
 			myScene.item[0].xgap and also ygap, linewidth, etc.
-	..- in the display() callback function, draw the grid-plane in webGL:
+	- in the display() callback function, draw the grid-plane in webGL:
 		myScene.item[0].drawWebGL()
 
-- Finally, write a first, very-simple version of 'makeRayTracedImage()' member
-	for CScene that will;
-	..- step through each pixel in the output image
-		(0,0) <= i,j <= (xmax,ymax), and for each pixel it:
-	..- find that pixel's location xpos,ypos in CCamera's image plane
-		(the center of the 'little square'), and
-	..- call CCamera.makeEyeRay()
-	that accepts float arguments xpos,ypos, and CRay argument rayNow,
+	- Finally, write a first, very-simple version of 'makeRayTracedImage()' member for CScene that will;
+		- step through each pixel in the output image
+			(0,0) <= i,j <= (xmax,ymax), and for each pixel it:
+		- find that pixel's location xpos,ypos in CCamera's image plane
+			(the center of the 'little square'), and
+		- call CCamera.makeEyeRay() that accepts float arguments xpos,ypos, and CRay argument rayNow,
 		and uses them to  set all values of the CScene.rayNow object
-	- call CGeom.traceGrid(rayNow) to find where that ray hits
-		the object (if anywhere)
-	- use the returned value (-1,0, or 1) to set the pixel color in
-		your frame buffer.
+		- call CGeom.traceGrid(rayNow) to find where that ray hits the object (if anywhere)
+		- use the returned value (-1,0, or 1) to set the pixel color in your frame buffer.
 		if the ray hits nothing, use 'scene background' color (black?)
-	- make your program respond to the 't' key (trace) function by a
-		call your makeRayTracedImage() function.
+		- make your program respond to the 't' key (trace) function by a call your makeRayTracedImage() function.
 
-- Sixth, run your program! Run your ray-tracer
-(call myScene.makeRayTracedImage() by hitting the 't' key).
+- Sixth, run your program! Run your ray-tracer (call myScene.makeRayTracedImage() by hitting the 't' key).
 You should get an on-screen grid.  If you use the +,- keys to make your lineGrid.zVal larger or smaller, the grid should grow or shrink, just as it would if you moved your camera away or towards it.
 
 ### You have a complete (but rudimentary) ray tracer!  
