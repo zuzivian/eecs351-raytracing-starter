@@ -1,48 +1,7 @@
-/*=====================
-  VBObox-Lib.js library:
-  =====================
-
-	-------------------------------------------------------
-	A MESSY SET OF CUSTOMIZED OBJECTS--NOT REALLY A 'CLASS'
-	-------------------------------------------------------
-As each 'VBObox' object can contain:
-  -- a DIFFERENT GLSL shader program,
-  -- a DIFFERENT set of attributes that define a vertex for that shader program,
-  -- a DIFFERENT number of vertices to used to fill the VBOs in GPU memory, and
-  -- a DIFFERENT set of uniforms transferred to GPU memory for shader use.
-  THUS:
-		I don't see any easy way to use the exact same object constructors and
-		prototypes for all VBObox objects.  Every additional VBObox objects may vary
-		substantially, so I recommend that you copy and re-name an existing VBObox
-		prototype object, and modify as needed, as shown here.
-		(e.g. to make the VBObox3 object, copy the VBObox2 constructor and
-		all its prototype functions, then modify their contents for VBObox3
-		activities.)
-
-*/
-// Written for EECS 351-2,	Intermediate Computer Graphics,
-//							Northwestern Univ. EECS Dept., Jack Tumblin
-// 2016.05.26 J. Tumblin-- Created; tested on 'TwoVBOs.html' starter code.
-// 2017.02.20 J. Tumblin-- updated for EECS 351-1 use for Project C.
-// 2018.04.11 J. Tumblin-- minor corrections/renaming for particle systems.
-//    --11e: global 'gl' replaced redundant 'myGL' fcn args;
-//    --12: added 'SwitchToMe()' fcn to simplify 'init()' function and to fix
-//      weird subtle errors that sometimes appear when we alternate 'adjust()'
-//      and 'draw()' functions of different VBObox objects. CAUSE: found that
-//      only the 'draw()' function (and not the 'adjust()' function) made a full
-//      changeover from one VBObox to another; thus calls to 'adjust()' for one
-//      VBObox could corrupt GPU contents for another.
-//      --Created vboStride, vboOffset members to centralize VBO layout in the
-//      constructor function.
-//    -- 13 (abandoned) tried to make a 'core' or 'resuable' VBObox object to
-//      which we would add on new properties for shaders, uniforms, etc., but
-//      I decided there was too little 'common' code that wasn't customized.
-//    --14: improved animation timing; moved all literals to the constructor;
-//=============================================================================
-
+/* *
 
 //=============================================================================
-//=============================================================================
+//=====/========================================================================
 function VBObox1() { // (JUST ONE instance: as 'rayView' var
                       // that shows ray-traced image-on-screen as a texture map
 //=============================================================================
